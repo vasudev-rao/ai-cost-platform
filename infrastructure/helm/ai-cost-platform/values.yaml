@@ -1,0 +1,101 @@
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: "gp3"
+
+backend:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: ai-cost-platform/backend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+  env:
+    APP_ENV: production
+    DEBUG: "false"
+
+frontend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ai-cost-platform/frontend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: app.aicostplatform.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend
+    - host: api.aicostplatform.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: backend
+  tls:
+    - secretName: aicost-tls
+      hosts:
+        - app.aicostplatform.com
+        - api.aicostplatform.com
+
+postgresql:
+  enabled: false  # Use external RDS in production
+  external:
+    host: rds-endpoint
+    port: 5432
+    database: ai_cost_platform
+
+kafka:
+  enabled: false  # Use external MSK in production
+  external:
+    bootstrapServers: msk-endpoint:9092
+
+redis:
+  enabled: true
+  auth:
+    enabled: true
+  replica:
+    replicaCount: 2
+
+prometheus:
+  enabled: true
+  alertmanager:
+    enabled: true
+
+grafana:
+  enabled: true
+  adminUser: admin
+  persistence:
+    enabled: true
+    size: 10Gi

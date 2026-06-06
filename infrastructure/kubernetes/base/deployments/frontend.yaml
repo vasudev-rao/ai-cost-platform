@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-cost-frontend
+  namespace: ai-cost-platform
+  labels:
+    app: ai-cost-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai-cost-frontend
+  template:
+    metadata:
+      labels:
+        app: ai-cost-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: ai-cost-platform/frontend:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NEXT_PUBLIC_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: frontend-config
+                  key: API_URL
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10

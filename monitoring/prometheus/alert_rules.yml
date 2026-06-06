@@ -1,0 +1,66 @@
+groups:
+  - name: ai_cost_platform
+    rules:
+      # API availability
+      - alert: BackendDown
+        expr: up{job="ai-cost-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "AI Cost Platform backend is down"
+          description: "Backend has been down for more than 1 minute"
+
+      # High API latency
+      - alert: HighAPILatency
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job="ai-cost-backend"}[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API latency (P99 > 2s)"
+          description: "P99 latency is {{ $value }}s"
+
+      # High error rate
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{job="ai-cost-backend",status=~"5.."}[5m]) / rate(http_requests_total{job="ai-cost-backend"}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate (>5%)"
+
+      # Kafka consumer lag
+      - alert: KafkaConsumerLag
+        expr: kafka_consumer_group_lag > 10000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka consumer lag is high: {{ $value }}"
+
+      # PostgreSQL connections
+      - alert: PostgresHighConnections
+        expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL connections > 80%"
+
+      # Pod crash looping
+      - alert: PodCrashLooping
+        expr: increase(kube_pod_container_status_restarts_total{namespace="ai-cost-platform"}[15m]) > 3
+        labels:
+          severity: critical
+        annotations:
+          summary: "Pod {{ $labels.pod }} is crash looping"
+
+      # Disk usage
+      - alert: HighDiskUsage
+        expr: (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk usage > 85% on {{ $labels.instance }}"

@@ -1,0 +1,40 @@
+{
+  "title": "AI Cost Intelligence Platform — Overview",
+  "uid": "ai-cost-overview",
+  "version": 1,
+  "schemaVersion": 38,
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "API Requests/sec",
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "rate(http_requests_total{job='ai-cost-backend'}[5m])", "legendFormat": "RPS"}]
+    },
+    {
+      "id": 2, "type": "stat", "title": "P99 Latency",
+      "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job='ai-cost-backend'}[5m]))", "legendFormat": "P99"}]
+    },
+    {
+      "id": 3, "type": "stat", "title": "Error Rate",
+      "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "rate(http_requests_total{job='ai-cost-backend',status=~'5..'}[5m])", "legendFormat": "Errors/s"}]
+    },
+    {
+      "id": 4, "type": "stat", "title": "Active Pods",
+      "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "kube_deployment_status_replicas_ready{namespace='ai-cost-platform'}", "legendFormat": "{{deployment}}"}]
+    },
+    {
+      "id": 5, "type": "timeseries", "title": "Request Rate over Time",
+      "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8},
+      "targets": [{"expr": "rate(http_requests_total{job='ai-cost-backend'}[1m])", "legendFormat": "{{method}} {{path}}"}]
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "Kafka Consumer Lag",
+      "gridPos": {"x": 12, "y": 4, "w": 12, "h": 8},
+      "targets": [{"expr": "kafka_consumer_group_lag", "legendFormat": "{{topic}} - {{group}}"}]
+    }
+  ],
+  "time": {"from": "now-3h", "to": "now"},
+  "refresh": "30s"
+}

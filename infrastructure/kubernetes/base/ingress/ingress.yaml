@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ai-cost-platform-ingress
+  namespace: ai-cost-platform
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.aicostplatform.com"
+spec:
+  tls:
+    - hosts:
+        - app.aicostplatform.com
+        - api.aicostplatform.com
+      secretName: aicost-tls
+  rules:
+    - host: app.aicostplatform.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ai-cost-frontend
+                port:
+                  number: 3000
+    - host: api.aicostplatform.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ai-cost-backend
+                port:
+                  number: 8000
